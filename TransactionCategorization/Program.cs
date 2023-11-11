@@ -23,7 +23,15 @@ foreach (var readRow in reader)
     Console.WriteLine($"{l.Date} {l.Amount} {l.Description}");
 }
 
-new CategoryParser().Categorise(list);
+var categories = new List<Categories>()
+{
+    new Categories("Tatts", "Gambling"),
+    new Categories("Transfer to CBA A/c NetBank Rent", "Rent"),
+    new Categories("NERO UTILITIES", "Utilities"),
+    new Categories("Club Bunker", "Gym")
+};
+
+new CategoryParser().Categorise(list, categories);
 
 foreach (var w in list)
 {

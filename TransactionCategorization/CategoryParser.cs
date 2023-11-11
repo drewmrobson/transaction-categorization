@@ -1,15 +1,30 @@
 ﻿namespace TransactionCategorization
 {
+    internal class Categories
+    {
+        public string Match { get; set; }
+        public string Category { get; set; }
+
+        public Categories(string match, string category)
+        {
+            Match = match;
+            Category = category;
+        }
+    }
+
     internal class CategoryParser
     {
-        internal void Categorise(List<Model> list)
+        internal void Categorise(List<Model> list, List<Categories> categories)
         {
-            foreach (var w in list)
+            foreach (var l in list)
             {
-                w.Category = "Uncategorised";
-                if (w.Description.Contains("Tatts Online"))
+                l.Category = "Uncategorised";
+                foreach (var c in categories)
                 {
-                    w.Category = "Gambling";
+                    if (l.Description.Contains(c.Match))
+                    {
+                        l.Category = c.Category;
+                    }
                 }
             }
         }
