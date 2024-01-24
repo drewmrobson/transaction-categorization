@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TransactionCategorization": {
+      "commandName": "Project",
+      "commandLineArgs": "--file C:/Source/CSVData.csv"
+    }
+  }
+}
