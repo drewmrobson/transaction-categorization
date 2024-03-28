@@ -45,7 +45,7 @@ await rootCommand.InvokeAsync(args);
 static void ProcessFile(FileInfo file)
 {
     using var reader = Sep.New(',').Reader().FromFile(file.FullName);
-    using var writer = Sep.New(',').Writer().ToFile("C:/Source/output.csv");
+    using var writer = Sep.New(',').Writer().ToFile($"C:/Source/{file.Name}-output.csv");
 
     var transactions = new List<Model>();
 
