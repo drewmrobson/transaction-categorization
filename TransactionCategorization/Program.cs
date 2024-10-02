@@ -6,19 +6,19 @@ using TransactionCategorization;
 // 1. File processing command
 var fileOption = new Option<FileInfo?>(
     name: "--file",
-    description: "The file to read and display on the console.");
+    description: @"The CSV file to process. e.g. `--file ""C:/Source/Cash.csv""`");
 
 // 2. Update mapping command
 var addCategoryOption = new Option<string[]>(
         name: "--add-cat",
-        description: "The category to add"
+        description: @"The transaction and associated category. e.g. `--add-cat ""Karalee Cellars"" ""Alcohol""`"
     )
 {
     AllowMultipleArgumentsPerToken = true,
 };
 
 // 3. Root config
-var rootCommand = new RootCommand("Sample app for System.CommandLine");
+var rootCommand = new RootCommand("Transaction Categorisation");
 rootCommand.AddOption(fileOption);
 rootCommand.AddOption(addCategoryOption);
 
@@ -33,7 +33,7 @@ rootCommand.SetHandler((file, map) =>
         && map.Length == 2)
     {
         string mappingText = File.ReadAllText("C:/Source/mapping.json");
-        var categories = JsonSerializer.Deserialize<List<Categories>>(mappingText);
+        var categories = JsonSerializer.Deserialize<List<Categories>>(mappingText)!;
         categories.Add(new Categories(map[0], map[1]));
         var data = JsonSerializer.Serialize(categories);
         File.WriteAllText("C:/Source/mapping.json", data);
@@ -64,7 +64,7 @@ static void ProcessFile(FileInfo file)
     }
 
     var json = File.ReadAllText("C:/Source/mapping.json");
-    var categories = JsonSerializer.Deserialize<List<Categories>>(json);
+    var categories = JsonSerializer.Deserialize<List<Categories>>(json)!;
     new CategoryParser().Categorise(transactions, categories);
 
     foreach (var item in transactions)
