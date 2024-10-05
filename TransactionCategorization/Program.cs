@@ -3,6 +3,8 @@ using System.CommandLine;
 using System.Text.Json;
 using TransactionCategorization;
 
+const string MappingFile = "C:/Source/mapping.json";
+
 // 1. File processing command
 var fileOption = new Option<FileInfo?>(
     name: "--file",
@@ -32,11 +34,11 @@ rootCommand.SetHandler((file, map) =>
     if(map != null
         && map.Length == 2)
     {
-        string mappingText = File.ReadAllText("C:/Source/mapping.json");
+        string mappingText = File.ReadAllText(MappingFile);
         var categories = JsonSerializer.Deserialize<List<Categories>>(mappingText)!;
         categories.Add(new Categories(map[0], map[1]));
         var data = JsonSerializer.Serialize(categories);
-        File.WriteAllText("C:/Source/mapping.json", data);
+        File.WriteAllText(MappingFile, data);
     }
 }, fileOption, addCategoryOption);
 
@@ -63,7 +65,7 @@ static void ProcessFile(FileInfo file)
         });
     }
 
-    var json = File.ReadAllText("C:/Source/mapping.json");
+    var json = File.ReadAllText(MappingFile);
     var categories = JsonSerializer.Deserialize<List<Categories>>(json)!;
     new CategoryParser().Categorise(transactions, categories);
 

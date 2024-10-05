@@ -34,3 +34,17 @@ cd C:/Source/transactioncategorization
 TransactionCategorization.exe --add-cat "Woolworths" "Groceries"
 TransactionCategorization.exe --file "C:/Source/Spending.csv"
 ```
+
+## File Format
+
+The CSV file is read into this model:
+
+```csharp
+internal class Model
+{
+    public DateTime Date { get; set; }
+    public decimal Amount { get; set; }
+    public string Description { get; set; } = "Unset";
+    public string Category { get; set; } = "Unset";
+}
+```
