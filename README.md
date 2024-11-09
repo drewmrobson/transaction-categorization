@@ -16,6 +16,7 @@ Transaction Categorization is a CLI tool for bulk mapping financial transactions
 
 1. `Sep` and `System.CommandLine` from NuGet
 2. A CSV of your financial transactions with the following headers:
+
 | Date  | Amount | Description |
 |-------|--------|-------------|
 
