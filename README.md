@@ -10,7 +10,7 @@ I built this dumb little app for myself and maybe you can find it useful too?
 
 ## Overview
 
-Transaction Categorization is a CLI tool for bulk mapping financial transactions in a CSV file. I built this tool to make managing my finances and tax easier, since there are a lot of common transactions in my financial records.
+Transaction Categorization is a CLI tool for bulk mapping financial transactions from a CSV file. I built this tool to make managing my finances and tax easier, since there are a lot of common transactions in my financial records.
 
 ## Dependencies
 
