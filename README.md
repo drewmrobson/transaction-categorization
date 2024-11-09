@@ -1,4 +1,12 @@
 # transaction-categorization
+Categorise and auto-map your financial transactions.
+
+I built this dumb little app for myself and maybe you can find it useful too?
+
+- [Overview](#overview)
+- [Dependencies](#dependencies)
+- [Build](#build)
+- [Usage](#Usage)
 
 ## Overview
 
@@ -6,12 +14,10 @@ Transaction Categorization is a CLI tool for bulk mapping financial transactions
 
 ## Dependencies
 
-`Sep`
-`System.CommandLine`
-
-## Prerequisites
-
-Your CSV of financial transactions.
+1. `Sep` and `System.CommandLine` from NuGet
+2. A CSV of your financial transactions with the following headers:
+| Date  | Amount | Description |
+|-------|--------|-------------|
 
 ## Build
 
@@ -35,7 +41,7 @@ TransactionCategorization.exe --add-cat "Woolworths" "Groceries"
 TransactionCategorization.exe --file "C:/Source/Spending.csv"
 ```
 
-## File Format
+### File Format
 
 The CSV file is read into this model:
 
