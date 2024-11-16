@@ -26,12 +26,13 @@ rootCommand.AddOption(addCategoryOption);
 
 rootCommand.SetHandler((file, map) =>
 {
-    if(file != null)
+    if (file != null)
     {
         ProcessFile(file!);
+        return;
     }
 
-    if(map != null
+    if (map != null
         && map.Length == 2)
     {
         string mappingText = File.ReadAllText(MappingFile);
@@ -39,7 +40,10 @@ rootCommand.SetHandler((file, map) =>
         categories.Add(new Categories(map[0], map[1]));
         var data = JsonSerializer.Serialize(categories);
         File.WriteAllText(MappingFile, data);
+        return;
     }
+
+    throw new ArgumentException("Incorrect arguments provided");
 }, fileOption, addCategoryOption);
 
 await rootCommand.InvokeAsync(args);

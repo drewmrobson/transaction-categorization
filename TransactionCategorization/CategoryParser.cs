@@ -3,6 +3,7 @@
     internal class Categories
     {
         public string Match { get; set; }
+
         public string Category { get; set; }
 
         public Categories(string match, string category)
@@ -21,7 +22,7 @@
                 l.Category = "Uncategorised";
                 foreach (var c in categories)
                 {
-                    if (l.Description.Contains(c.Match))
+                    if(l.Description.ToLower().Contains(c.Match.ToLower()))
                     {
                         l.Category = c.Category;
                     }
