@@ -50,15 +50,18 @@ await rootCommand.InvokeAsync(args);
 
 static void ProcessFile(FileInfo file)
 {
-    using var reader = Sep.New(',').Reader().FromFile(file.FullName);
-    using var writer = Sep.New(',').Writer().ToFile($"C:/Source/{file.Name}-output.csv");
+    char defaultSeparator = ',';
+    var outputPath = $"C:/Source/{file.Name.Replace(file.Extension, string.Empty)}.processed.csv";
+
+    using var reader = Sep.New(defaultSeparator).Reader().FromFile(file.FullName);
+    using var writer = Sep.New(defaultSeparator).Writer().ToFile(outputPath);
 
     var transactions = new List<Model>();
 
     foreach (var readRow in reader)
     {
         var date = readRow[0].ToString();
-        var amount = readRow[1].ToString().Replace("\"", "");
+        var amount = readRow[1].ToString().Replace("\"", string.Empty);
         var description = readRow[2].ToString();
 
         transactions.Add(new Model

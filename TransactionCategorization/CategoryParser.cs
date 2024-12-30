@@ -15,11 +15,13 @@
 
     internal class CategoryParser
     {
+        const string UncategorisedCategory = "Uncategorised";
+
         internal void Categorise(List<Model> list, List<Categories> categories)
         {
             foreach (var l in list)
             {
-                l.Category = "Uncategorised";
+                l.Category = UncategorisedCategory;
                 foreach (var c in categories)
                 {
                     if(l.Description.ToLower().Contains(c.Match.ToLower()))
