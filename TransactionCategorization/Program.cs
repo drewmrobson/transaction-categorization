@@ -1,9 +1,10 @@
-﻿using nietras.SeparatedValues;
+﻿using Azure.Identity;
+using Azure.Storage.Blobs;
+using nietras.SeparatedValues;
 using System.CommandLine;
+using System.Text;
 using System.Text.Json;
 using TransactionCategorization;
-
-const string MappingFile = "C:/Source/mapping.json";
 
 // 1. File processing command
 var fileOption = new Option<FileInfo?>(
@@ -24,31 +25,38 @@ var rootCommand = new RootCommand("Transaction Categorisation");
 rootCommand.AddOption(fileOption);
 rootCommand.AddOption(addCategoryOption);
 
+// 4. App handler
 rootCommand.SetHandler((file, map) =>
 {
+    // 5. Read config from Azure Blob Storage
+    string mappingText = GetMappingConfig().GetAwaiter().GetResult();
+
     if (file != null)
     {
-        ProcessFile(file!);
+        // 6. Process file
+        ProcessFile(file!, mappingText);
         return;
     }
 
     if (map != null
         && map.Length == 2)
     {
-        string mappingText = File.ReadAllText(MappingFile);
+        // 7. Update mappiong config
         var categories = JsonSerializer.Deserialize<List<Categories>>(mappingText)!;
         categories.Add(new Categories(map[0], map[1]));
         var data = JsonSerializer.Serialize(categories);
-        File.WriteAllText(MappingFile, data);
+        SetMappingConfig(data).GetAwaiter().GetResult();
         return;
     }
 
     throw new ArgumentException("Incorrect arguments provided");
 }, fileOption, addCategoryOption);
 
+// 8. Execute app
 await rootCommand.InvokeAsync(args);
 
-static void ProcessFile(FileInfo file)
+// Process and categorise a file of transactions
+static void ProcessFile(FileInfo file, string mappingConfig)
 {
     char defaultSeparator = ',';
     var outputPath = $"C:/Source/{file.Name.Replace(file.Extension, string.Empty)}.processed.csv";
@@ -72,8 +80,7 @@ static void ProcessFile(FileInfo file)
         });
     }
 
-    var json = File.ReadAllText(MappingFile);
-    var categories = JsonSerializer.Deserialize<List<Categories>>(json)!;
+    var categories = JsonSerializer.Deserialize<List<Categories>>(mappingConfig)!;
     new CategoryParser().Categorise(transactions, categories);
 
     foreach (var item in transactions)
@@ -86,4 +93,40 @@ static void ProcessFile(FileInfo file)
     }
 
     writer.Dispose();
+}
+
+static async Task<string> GetMappingConfig()
+{
+    var blobServiceClient = new BlobServiceClient(
+                    new Uri(Constants.ConnectionString),
+                    new DefaultAzureCredential());
+    var containerClient = blobServiceClient.GetBlobContainerClient(Constants.ContainerName);
+    var blobClient = containerClient.GetBlobClient(Constants.BlobName);
+    var download = await blobClient.DownloadAsync();
+
+    using (var reader = new StreamReader(download.Value.Content, Encoding.UTF8))
+    {
+        return await reader.ReadToEndAsync();
+    }
+}
+
+static async Task SetMappingConfig(string mappingConfig)
+{
+    var blobServiceClient = new BlobServiceClient(
+                    new Uri(Constants.ConnectionString),
+                    new DefaultAzureCredential());
+    var containerClient = blobServiceClient.GetBlobContainerClient(Constants.ContainerName);
+    var blobClient = containerClient.GetBlobClient(Constants.BlobName);
+
+    using(var stream = new MemoryStream(Encoding.UTF8.GetBytes(mappingConfig)))
+    {
+        await blobClient.UploadAsync(stream, true);
+    }
+}
+
+public class Constants
+{
+    public const string ConnectionString = $"https://sttranscatprdae01.blob.core.windows.net";
+    public const string ContainerName = "mapping";
+    public const string BlobName = "mapping.json";
 }
