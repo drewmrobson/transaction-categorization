@@ -2,7 +2,7 @@
   "profiles": {
     "TransactionCategorization": {
       "commandName": "Project",
-      "commandLineArgs": "--file \"C:/Source/Cash.csv\""
+      "commandLineArgs": "--add-cat \"zz\" \"zz\""
     }
   }
 }

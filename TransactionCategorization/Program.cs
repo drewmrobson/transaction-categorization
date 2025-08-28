@@ -26,10 +26,12 @@ rootCommand.AddOption(fileOption);
 rootCommand.AddOption(addCategoryOption);
 
 // 4. App handler
-rootCommand.SetHandler((file, map) =>
+rootCommand.SetHandler(async (file, map) =>
 {
+    var mappingConfig = new MappingConfig();
+
     // 5. Read config from Azure Blob Storage
-    string mappingText = GetMappingConfig().GetAwaiter().GetResult();
+    string mappingText = await mappingConfig.Get();
 
     if (file != null)
     {
@@ -44,8 +46,10 @@ rootCommand.SetHandler((file, map) =>
         // 7. Update mappiong config
         var categories = JsonSerializer.Deserialize<List<Categories>>(mappingText)!;
         categories.Add(new Categories(map[0], map[1]));
-        var data = JsonSerializer.Serialize(categories);
-        SetMappingConfig(data).GetAwaiter().GetResult();
+
+        // Order by alphabetical
+        var data = JsonSerializer.Serialize(categories.OrderBy(x => x.Match));
+        await mappingConfig.Set(data);
         return;
     }
 
@@ -95,38 +99,34 @@ static void ProcessFile(FileInfo file, string mappingConfig)
     writer.Dispose();
 }
 
-static async Task<string> GetMappingConfig()
+public class MappingConfig
 {
-    var blobServiceClient = new BlobServiceClient(
-                    new Uri(Constants.ConnectionString),
-                    new DefaultAzureCredential());
-    var containerClient = blobServiceClient.GetBlobContainerClient(Constants.ContainerName);
-    var blobClient = containerClient.GetBlobClient(Constants.BlobName);
-    var download = await blobClient.DownloadAsync();
-
-    using (var reader = new StreamReader(download.Value.Content, Encoding.UTF8))
+    public async Task<string> Get()
     {
-        return await reader.ReadToEndAsync();
+        var blobServiceClient = new BlobServiceClient(
+                        new Uri(Constants.ConnectionString),
+                        new DefaultAzureCredential());
+        var containerClient = blobServiceClient.GetBlobContainerClient(Constants.ContainerName);
+        var blobClient = containerClient.GetBlobClient(Constants.BlobName);
+        var download = await blobClient.DownloadAsync();
+
+        using (var reader = new StreamReader(download.Value.Content, Encoding.UTF8))
+        {
+            return await reader.ReadToEndAsync();
+        }
     }
-}
 
-static async Task SetMappingConfig(string mappingConfig)
-{
-    var blobServiceClient = new BlobServiceClient(
-                    new Uri(Constants.ConnectionString),
-                    new DefaultAzureCredential());
-    var containerClient = blobServiceClient.GetBlobContainerClient(Constants.ContainerName);
-    var blobClient = containerClient.GetBlobClient(Constants.BlobName);
-
-    using(var stream = new MemoryStream(Encoding.UTF8.GetBytes(mappingConfig)))
+    public async Task Set(string mappingConfig)
     {
-        await blobClient.UploadAsync(stream, true);
-    }
-}
+        var blobServiceClient = new BlobServiceClient(
+                        new Uri(Constants.ConnectionString),
+                        new DefaultAzureCredential());
+        var containerClient = blobServiceClient.GetBlobContainerClient(Constants.ContainerName);
+        var blobClient = containerClient.GetBlobClient(Constants.BlobName);
 
-public class Constants
-{
-    public const string ConnectionString = $"https://sttranscatprdae01.blob.core.windows.net";
-    public const string ContainerName = "mapping";
-    public const string BlobName = "mapping.json";
+        using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(mappingConfig)))
+        {
+            await blobClient.UploadAsync(stream, true);
+        }
+    }
 }
