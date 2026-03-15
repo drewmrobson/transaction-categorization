@@ -63,7 +63,7 @@ await rootCommand.InvokeAsync(args);
 static void ProcessFile(FileInfo file, string mappingConfig)
 {
     char defaultSeparator = ',';
-    var outputPath = $"C:/Source/{file.Name.Replace(file.Extension, string.Empty)}.processed.csv";
+    var outputPath = $"C:/Users/Admin/OneDrive/Documents/bank-exports/{file.Name.Replace(file.Extension, string.Empty)}.processed.csv";
 
     using var reader = Sep.New(defaultSeparator).Reader().FromFile(file.FullName);
     using var writer = Sep.New(defaultSeparator).Writer().ToFile(outputPath);
