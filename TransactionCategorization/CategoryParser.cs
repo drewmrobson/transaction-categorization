@@ -1,12 +1,12 @@
 ﻿namespace TransactionCategorization
 {
-    internal class Categories
+    internal class CategoryMapping
     {
         public string Match { get; set; }
 
         public string Category { get; set; }
 
-        public Categories(string match, string category)
+        public CategoryMapping(string match, string category)
         {
             Match = match;
             Category = category;
@@ -17,7 +17,7 @@
     {
         const string UncategorisedCategory = "Uncategorised";
 
-        internal void Categorise(List<Model> list, List<Categories> categories)
+        internal void Categorise(List<Model> list, List<CategoryMapping> categories)
         {
             foreach (var l in list)
             {

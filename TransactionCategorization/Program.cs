@@ -50,8 +50,9 @@ rootCommand.SetHandler(async (file, map, outFile) =>
     {
         // 7. Update mapping config
         string mappingText = await mappingConfig.Get();
-        var categories = JsonSerializer.Deserialize<List<Categories>>(mappingText)!;
-        categories.Add(new Categories(map[0], map[1]));
+        var categories = JsonSerializer.Deserialize<List<CategoryMapping>>(mappingText)
+            ?? throw new InvalidOperationException("Failed to deserialize category mappings.");
+        categories.Add(new CategoryMapping(map[0], map[1]));
 
         // Order by alphabetical
         var data = JsonSerializer.Serialize(categories.OrderBy(x => x.Match));
@@ -59,7 +60,8 @@ rootCommand.SetHandler(async (file, map, outFile) =>
         return;
     }
 
-    throw new ArgumentException("Incorrect arguments provided");
+    Console.Error.WriteLine("Error: either --file or --add-cat must be provided.");
+    Environment.ExitCode = 1;
 }, fileOption, addCategoryOption, outOption);
 
 // 8. Execute app
@@ -114,7 +116,8 @@ static void ProcessFile(FileInfo file, string mappingConfig, FileInfo? outFile)
         });
     }
 
-    var categories = JsonSerializer.Deserialize<List<Categories>>(mappingConfig)!;
+    var categories = JsonSerializer.Deserialize<List<CategoryMapping>>(mappingConfig)
+        ?? throw new InvalidOperationException("Failed to deserialize category mappings.");
     new CategoryParser().Categorise(transactions, categories);
 
     foreach (var item in transactions)
@@ -125,21 +128,25 @@ static void ProcessFile(FileInfo file, string mappingConfig, FileInfo? outFile)
         writeRow["Description"].Set(item.Description);
         writeRow["Category"].Set(item.Category);
     }
-
-    writer.Dispose();
 }
 
 public class MappingConfig
 {
-    public async Task<string> Get()
+    private readonly BlobClient _blobClient;
+
+    public MappingConfig()
     {
         var blobServiceClient = new BlobServiceClient(
-                        new Uri(Constants.ConnectionString),
-                        new DefaultAzureCredential());
-        var containerClient = blobServiceClient.GetBlobContainerClient(Constants.ContainerName);
-        var blobClient = containerClient.GetBlobClient(Constants.BlobName);
-        var download = await blobClient.DownloadAsync();
+            new Uri(Constants.ConnectionString),
+            new DefaultAzureCredential());
+        _blobClient = blobServiceClient
+            .GetBlobContainerClient(Constants.ContainerName)
+            .GetBlobClient(Constants.BlobName);
+    }
 
+    public async Task<string> Get()
+    {
+        var download = await _blobClient.DownloadAsync();
         using (var reader = new StreamReader(download.Value.Content, Encoding.UTF8))
         {
             return await reader.ReadToEndAsync();
@@ -148,15 +155,9 @@ public class MappingConfig
 
     public async Task Set(string mappingConfig)
     {
-        var blobServiceClient = new BlobServiceClient(
-                        new Uri(Constants.ConnectionString),
-                        new DefaultAzureCredential());
-        var containerClient = blobServiceClient.GetBlobContainerClient(Constants.ContainerName);
-        var blobClient = containerClient.GetBlobClient(Constants.BlobName);
-
         using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(mappingConfig)))
         {
-            await blobClient.UploadAsync(stream, true);
+            await _blobClient.UploadAsync(stream, true);
         }
     }
 }

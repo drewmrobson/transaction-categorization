@@ -1,8 +1,4 @@
-﻿using System.Globalization;
-using System.Security.Cryptography;
-using System.Text;
-
-namespace TransactionCategorization
+﻿namespace TransactionCategorization
 {
     internal class Model
     {
@@ -10,19 +6,5 @@ namespace TransactionCategorization
         public decimal Amount { get; set; }
         public string Description { get; set; } = string.Empty;
         public string Category { get; set; } = "Unset";
-        public string? Hash { get; set; }
-
-        public string CreateMD5()
-        {
-            using (var md5 = MD5.Create())
-            {
-                var input = Encoding.ASCII.GetBytes(
-                    Date.ToString("o", CultureInfo.InvariantCulture) +
-                    Amount.ToString(CultureInfo.InvariantCulture) +
-                    Description);
-                var hash = md5.ComputeHash(input);
-                return Convert.ToHexString(hash);
-            }
-        }
     }
 }

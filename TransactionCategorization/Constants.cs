@@ -1,6 +1,6 @@
 ﻿namespace TransactionCategorization
 {
-    public class Constants
+    internal class Constants
     {
         public const string ConnectionString = $"https://sttranscatprdae01.blob.core.windows.net";
         public const string ContainerName = "mapping";
