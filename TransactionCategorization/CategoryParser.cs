@@ -24,7 +24,7 @@
                 l.Category = UncategorisedCategory;
                 foreach (var c in categories)
                 {
-                    if(l.Description.ToLower().Contains(c.Match.ToLower()))
+                    if (l.Description.Contains(c.Match, StringComparison.OrdinalIgnoreCase))
                     {
                         l.Category = c.Category;
                     }

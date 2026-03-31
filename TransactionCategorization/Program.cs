@@ -80,16 +80,36 @@ static void ProcessFile(FileInfo file, string mappingConfig, FileInfo? outFile)
 
     var transactions = new List<Model>();
 
+    int lineNumber = 0;
     foreach (var readRow in reader)
     {
-        var date = readRow[0].ToString();
-        var amount = readRow[1].ToString().Replace("\"", string.Empty);
+        lineNumber++;
+        if (readRow.ColCount < 3)
+        {
+            Console.Error.WriteLine($"Row {lineNumber}: skipped — expected 3 columns, found {readRow.ColCount}.");
+            continue;
+        }
+
+        var dateRaw = readRow[0].ToString();
+        var amountRaw = readRow[1].ToString().Replace("\"", string.Empty);
         var description = readRow[2].ToString();
+
+        if (!DateTime.TryParse(dateRaw, CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+        {
+            Console.Error.WriteLine($"Row {lineNumber}: skipped — could not parse date '{dateRaw}'.");
+            continue;
+        }
+
+        if (!decimal.TryParse(amountRaw, NumberStyles.Any, CultureInfo.InvariantCulture, out var amount))
+        {
+            Console.Error.WriteLine($"Row {lineNumber}: skipped — could not parse amount '{amountRaw}'.");
+            continue;
+        }
 
         transactions.Add(new Model
         {
-            Date = DateTime.Parse(date, CultureInfo.InvariantCulture),
-            Amount = decimal.Parse(amount, CultureInfo.InvariantCulture),
+            Date = date,
+            Amount = amount,
             Description = description
         });
     }
