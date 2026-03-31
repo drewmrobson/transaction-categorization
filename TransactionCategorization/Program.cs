@@ -2,6 +2,7 @@
 using Azure.Storage.Blobs;
 using nietras.SeparatedValues;
 using System.CommandLine;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using TransactionCategorization;
@@ -20,30 +21,35 @@ var addCategoryOption = new Option<string[]>(
     AllowMultipleArgumentsPerToken = true,
 };
 
-// 3. Root config
+// 3. Output file option
+var outOption = new Option<FileInfo?>(
+    name: "--out",
+    description: @"Output file path. Defaults to the input file with '.processed.csv' in the same directory.");
+
+// 4. Root config
 var rootCommand = new RootCommand("Transaction Categorisation");
 rootCommand.AddOption(fileOption);
 rootCommand.AddOption(addCategoryOption);
+rootCommand.AddOption(outOption);
 
-// 4. App handler
-rootCommand.SetHandler(async (file, map) =>
+// 5. App handler
+rootCommand.SetHandler(async (file, map, outFile) =>
 {
     var mappingConfig = new MappingConfig();
-
-    // 5. Read config from Azure Blob Storage
-    string mappingText = await mappingConfig.Get();
 
     if (file != null)
     {
         // 6. Process file
-        ProcessFile(file!, mappingText);
+        string mappingText = await mappingConfig.Get();
+        ProcessFile(file, mappingText, outFile);
         return;
     }
 
     if (map != null
         && map.Length == 2)
     {
-        // 7. Update mappiong config
+        // 7. Update mapping config
+        string mappingText = await mappingConfig.Get();
         var categories = JsonSerializer.Deserialize<List<Categories>>(mappingText)!;
         categories.Add(new Categories(map[0], map[1]));
 
@@ -54,16 +60,20 @@ rootCommand.SetHandler(async (file, map) =>
     }
 
     throw new ArgumentException("Incorrect arguments provided");
-}, fileOption, addCategoryOption);
+}, fileOption, addCategoryOption, outOption);
 
 // 8. Execute app
 await rootCommand.InvokeAsync(args);
 
 // Process and categorise a file of transactions
-static void ProcessFile(FileInfo file, string mappingConfig)
+static void ProcessFile(FileInfo file, string mappingConfig, FileInfo? outFile)
 {
     char defaultSeparator = ',';
-    var outputPath = $"C:/Users/Admin/OneDrive/Documents/bank-exports/{file.Name.Replace(file.Extension, string.Empty)}.processed.csv";
+    var outputPath = outFile?.FullName
+        ?? Path.Combine(
+            file.DirectoryName ?? Environment.CurrentDirectory,
+            Path.GetFileNameWithoutExtension(file.Name) + ".processed.csv");
+    Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
 
     using var reader = Sep.New(defaultSeparator).Reader().FromFile(file.FullName);
     using var writer = Sep.New(defaultSeparator).Writer().ToFile(outputPath);
@@ -78,8 +88,8 @@ static void ProcessFile(FileInfo file, string mappingConfig)
 
         transactions.Add(new Model
         {
-            Date = DateTime.Parse(date),
-            Amount = decimal.Parse(amount),
+            Date = DateTime.Parse(date, CultureInfo.InvariantCulture),
+            Amount = decimal.Parse(amount, CultureInfo.InvariantCulture),
             Description = description
         });
     }
@@ -90,8 +100,8 @@ static void ProcessFile(FileInfo file, string mappingConfig)
     foreach (var item in transactions)
     {
         using var writeRow = writer.NewRow();
-        writeRow["Date"].Set(item.Date.ToString());
-        writeRow["Amount"].Set(item.Amount.ToString());
+        writeRow["Date"].Set(item.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+        writeRow["Amount"].Set(item.Amount.ToString(CultureInfo.InvariantCulture));
         writeRow["Description"].Set(item.Description);
         writeRow["Category"].Set(item.Category);
     }

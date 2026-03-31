@@ -18,7 +18,7 @@ namespace TransactionCategorization
             {
                 var input = Encoding.ASCII.GetBytes(
                     Date.ToString("o", CultureInfo.InvariantCulture) +
-                    Amount.ToString() +
+                    Amount.ToString(CultureInfo.InvariantCulture) +
                     Description);
                 var hash = md5.ComputeHash(input);
                 return Convert.ToHexString(hash);
